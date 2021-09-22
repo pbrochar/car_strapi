@@ -2,6 +2,8 @@ from database import send_cars
 from database import print_cars_from_db
 from database import get_token
 from database import remove_cars
+from database import create_race
+from database import create_results
 import requests
 import json
 import time
@@ -9,72 +11,6 @@ import asyncio
 from error import OutOfGazError, TooMuchFuelError
 from race import Race
 from car import Car
-
-def create_race(token: str, race: Race) -> None:
-    response = requests.get(
-        url="http://localhost:1337/cars",
-        headers={'Authorization': token}
-    )
-    car_names = [
-        car.name
-        for car in race.cars
-    ]
-    ids = [ 
-        car['id']
-        for car in response.json()
-        if car['name'] in car_names
-    ]
-    response = requests.post(
-        url="http://localhost:1337/races",
-        data=json.dumps({
-            'name' : race.name,
-            'cars': ids,
-        }),
-        headers={
-            'Authorization': token,	
-            'Content-Type': 'application/json',
-        }
-    )
-           
-def create_results(token: str, race: Race, results: list[tuple]) -> None:
-    race_id = requests.get(
-        url="http://localhost:1337/races",
-        params={"name": race.name},
-        headers={
-            'Authorization': token,	
-            'Content-Type': 'application/json',
-        }
-    )
-    ranked, unranked = [], []
-    for result in results: # split results in two list : ranked and if necessary unranked cars
-        if isinstance(result[0], OutOfGazError):
-            unranked.append(result)
-        else:
-            ranked.append(result)
-    ranked_name = [
-        {"time": car[0], "name": car[1].name}
-        for car in ranked
-    ]
-    for car in ranked_name:
-        response = requests.get(
-            url="http://localhost:1337/cars",
-            params={"name": car['name']},
-            headers={'Authorization': token}
-        )
-        requests.post(
-            url="http://localhost:1337/results",
-            data=json.dumps({
-                'time': round(car['time'], 3),
-                'ranked': 'true',
-                'car': response.json()[0]['id'],
-                'race': race_id.json()[0]['id']
-            }),
-            headers={
-                'Authorization': token,	
-                'Content-Type': 'application/json',
-            }
-        )
-
 
 
 if __name__ == "__main__":
@@ -108,6 +44,5 @@ if __name__ == "__main__":
     results = asyncio.run(race.run())
     create_race(token, race)
     create_results(token, race, results)
-    
     # test = asyncio.run(race.run())
     # print(test)
