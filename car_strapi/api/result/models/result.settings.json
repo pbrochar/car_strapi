@@ -1,0 +1,31 @@
+{
+  "kind": "collectionType",
+  "collectionName": "results",
+  "info": {
+    "name": "result"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "car": {
+      "model": "car",
+      "via": "result"
+    },
+    "race": {
+      "model": "race"
+    },
+    "time": {
+      "type": "float"
+    },
+    "distance": {
+      "type": "float"
+    },
+    "ranked": {
+      "type": "boolean"
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "kind": "collectionType",
+  "collectionName": "cars",
+  "info": {
+    "name": "car"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "unique": true
+    },
+    "model": {
+      "type": "string"
+    },
+    "wight": {
+      "type": "integer"
+    },
+    "car_length": {
+      "type": "integer"
+    },
+    "height": {
+      "type": "integer"
+    },
+    "width": {
+      "type": "integer"
+    },
+    "maximum_speed": {
+      "type": "integer"
+    },
+    "tank_size": {
+      "type": "integer"
+    },
+    "average_consumption": {
+      "type": "integer"
+    },
+    "races": {
+      "via": "cars",
+      "collection": "race"
+    },
+    "result": {
+      "via": "car",
+      "model": "result"
+    }
+  }
+}
