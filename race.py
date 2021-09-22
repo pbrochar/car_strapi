@@ -20,21 +20,23 @@ class Race:
         The result list is divided into two lists: the list of ranked cars and the list of unranked cars.
         Depending on the grading_unit, the ranked list is sorted by time (grading_unit = 's') or by distance (grading_unit = 'm')
         """
+        print(results)
         ranked, unranked = [], []
         for result in results: # split results in two list : ranked and if necessary unranked cars
-            if isinstance(result["car"], OutOfGazError):
+            if isinstance(result["move_time"], OutOfGazError):
                 unranked.append(result)
             else:
                 ranked.append(result)
+        print(unranked)
         # Sort the two list, if unit_in_time is False the distance covered is calculated from the race time and the maximum_speed of the car.
         # For the unranked car, sort is only done by distance covered.
         unit_in_time = ranked[0]["unit_in_time"]
         ranked.sort(
-            key= lambda car_ranked: None if car_ranked["unit_in_time"] is True else car_ranked["move_time"] * car_ranked["car"].maximum_speed,
+            key= lambda car_ranked: car_ranked["move_time"] if car_ranked["unit_in_time"] is True else car_ranked["move_time"] * car_ranked["car"].maximum_speed,
             reverse=not unit_in_time
         )
         unranked.sort(
-            key=lambda car_unranked: car_unranked['move_time'] * car_unranked['car'].maximum_speed,
+            key=lambda car_unranked: car_unranked['move_time'].move_time * car_unranked['car'].maximum_speed,
             reverse=True
         )
         rank = 1
@@ -46,7 +48,7 @@ class Race:
         if unranked:
             print("=== UNRANKED ===")    
             for car in unranked:
-                print(f"Rank {rank} -> DISTANCE : {round(car['move_time'] * car['car'].maximum_speed, 3)} m -> Car : {car['car'].model} - {car['car'].name} ")
+                print(f"Rank {rank} -> DISTANCE : {round(car['move_time'].move_time * car['car'].maximum_speed, 3)} m -> Car : {car['car'].model} - {car['car'].name} ")
                 rank += 1
     
     def full_gas(self) -> None:
@@ -68,7 +70,7 @@ class Race:
             {
                 "move_time" : move_time,
                 "car" : car,
-                "unit_in_time": False if distance is None or isinstance(move_times, OutOfGazError) else True,
+                "unit_in_time": False if distance is None or isinstance(move_time, OutOfGazError) else True,
             }
                for car, move_time in zip(self.cars, move_times)
         ]

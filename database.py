@@ -6,18 +6,15 @@ from error import OutOfGazError
 
 def get_token(identifier: str, password: str) -> str:
     auth = requests.post(
-                url="http://localhost:1337/auth/local",
-                data={
-                    'identifier': identifier, 
-                    'password': password,
-                }
+		url="http://localhost:1337/auth/local",
+		data={
+			'identifier': identifier, 
+			'password': password,
+		}
     )
-    try:
-        auth.raise_for_status()
-    except Exception as e:
-        raise
+    auth.raise_for_status()
     token = 'Bearer ' + auth.json()['jwt']
-    return (token)
+    return token
 
    
 def send_cars(token: str, cars: list[Car]) -> None:
@@ -30,58 +27,46 @@ def send_cars(token: str, cars: list[Car]) -> None:
                 'Content-Type': 'application/json',
             }
         )
-        try:
-            car_sent.raise_for_status()
-        except Exception as e:
-            raise
+        car_sent.raise_for_status()
 
 def remove_cars(token: str) -> None:
     cars = requests.get(
-            url="http://localhost:1337/cars",
-            headers={
-                'Authorization': token,
-            }
+		url="http://localhost:1337/cars",
+		headers={"Authorization": token},
     )
     car_dict = cars.json()
     for car in car_dict:
-        car_rem = requests.delete(
-                    url="http://localhost:1337/cars" + f"/{car['id']}",
-                    headers={
-                        'Authorization': token,
-                    },
+        requests.delete(
+			url="http://localhost:1337/cars" + f"/{car['id']}",
+			headers={"Authorization": token},
         )
 
 def print_cars_from_db(token: str) -> None:
     cars = requests.get(
-            url="http://localhost:1337/cars",
-            headers={'Authorization': token}
+		url="http://localhost:1337/cars",
+		headers={"Authorization": token}
     )
-    try:
-        cars.raise_for_status()
-    except Exception as e:
-        raise
+    cars.raise_for_status()
     print(cars.json())
    
  
 def create_race(token: str, race: Race) -> None:
     response = requests.get(
         url="http://localhost:1337/cars",
+        params={"name": [
+        	car.name
+        	for car in race.cars
+    	]},
         headers={'Authorization': token}
     )
-    car_names = [
-        car.name
-        for car in race.cars
-    ]
-    ids = [ 
-        car['id']
-        for car in response.json()
-        if car['name'] in car_names
-    ]
     response = requests.post(
         url="http://localhost:1337/races",
         data=json.dumps({
             'name' : race.name,
-            'cars': ids,
+            'cars': [
+				car['id']
+				for car in response.json()
+			]
         }),
         headers={
             'Authorization': token,	
@@ -89,12 +74,13 @@ def create_race(token: str, race: Race) -> None:
         }
     )
     
-def _put_results_in_db(token: str, cars: list[dict], ranked: bool, race_id: str) -> None:
+def _put_results_in_db(token: str, cars: list[dict], race_id: str) -> None:
     cars = [
         {
-            "time": car['move_time'], 
+            "time": car['move_time'].move_time if isinstance(car['move_time'], OutOfGazError) else car['move_time'], 
             "name": car['car'].name,
             "car": car['car'],
+            "ranked": False if isinstance(car['move_time'], OutOfGazError) else True,
             "unit_in_time": car['unit_in_time'],
         }
         for car in cars
@@ -110,7 +96,7 @@ def _put_results_in_db(token: str, cars: list[dict], ranked: bool, race_id: str)
             data=json.dumps({
                 'time': round(car['time'], 3) if car['unit_in_time'] is True else None,
                 'distance': car['time'] * car['car'].maximum_speed if car['unit_in_time'] is False else None,
-                'ranked': ranked,
+                'ranked': car['ranked'],
                 'car': response.json()[0]['id'],
                 'race': race_id
             }),
@@ -122,7 +108,7 @@ def _put_results_in_db(token: str, cars: list[dict], ranked: bool, race_id: str)
     
     
 def create_results(token: str, race: Race, results: list[dict]) -> None:
-    race_id = requests.get(
+    response = requests.get(
         url="http://localhost:1337/races",
         params={"name": race.name},
         headers={
@@ -130,14 +116,6 @@ def create_results(token: str, race: Race, results: list[dict]) -> None:
             'Content-Type': 'application/json',
         }
     )
-    ranked, unranked = [], []
-    for result in results: # split results in two list : ranked and if necessary unranked cars
-        if isinstance(result['car'], OutOfGazError):
-            unranked.append(result)
-        else:
-            ranked.append(result)
-    if ranked:
-        _put_results_in_db(token, ranked, True, race_id.json()[0]['id'])
-    if unranked:
-        _put_results_in_db(token, ranked, False, race_id.json()[0]['id'])
+    race_id = response.json()[0]['id']
+    _put_results_in_db(token, results, race_id)
 

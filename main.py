@@ -14,7 +14,7 @@ from car import Car
 
 
 if __name__ == "__main__":
-    tuture = Car("Renault", "Max", 10, 10, 10, 10, 250, 10, 10)
+    tuture = Car("Renault", "Max", 10, 10, 10, 10, 2, 1, 1)
     toto = Car("Tesla", "Paul", 10, 10, 10, 10, 210, 10, 12)
     carglass = Car("BMW", "Leo", 10, 10, 10, 10, 200, 162, 14)
     titi = Car("Peugeot", "Dede", 10, 10, 10, 10, 200, 150, 10)
@@ -40,8 +40,8 @@ if __name__ == "__main__":
     #     raise
     # remove_cars(token)
     # print_cars_from_db(token)
-    race = Race("Le Man", tuture, toto)
-    results = asyncio.run(race.run())
+    race = Race("Le Man", tuture, toto, carglass, titi, niglo, voiture, ferrari)
+    results = asyncio.run(race.run(200))
     create_race(token, race)
     create_results(token, race, results)
     # test = asyncio.run(race.run())
